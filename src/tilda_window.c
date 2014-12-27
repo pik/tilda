@@ -136,6 +136,37 @@ gint toggle_fullscreen_cb (tilda_window *tw)
     // It worked. Having this return GDK_EVENT_STOP makes the callback not carry the
     // keystroke into the vte terminal widget.
     return GDK_EVENT_STOP;
+} 
+
+gint toggle_transparency (tilda_window *tw)
+{
+    DEBUG_FUNCTION ("toggle_transparency"); 
+    DEBUG_ASSERT (tw != Null); 
+    guint i;
+    tilda_term *tt;
+    gboolean status = !config_getbool ("enable_transparency");
+    config_setbool ("enable_transparency", status); 
+    gdouble transparency_level = 0.0;
+    transparency_level = ((gdouble) config_getint ("transparency"))/100;
+    if (status)
+    {
+        for (i=0; i<g_list_length (tw->terms); i++) {
+            tt = g_list_nth_data (tw->terms, i);
+            vte_terminal_set_background_saturation (VTE_TERMINAL(tt->vte_term), transparency_level);
+            vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), !tw->have_argb_visual);
+            vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), (1.0 - transparency_level) * 0xffff);
+        }
+    }
+    else
+    {
+        for (i=0; i<g_list_length (tw->terms); i++) {
+            tt = g_list_nth_data (tw->terms, i);
+            vte_terminal_set_background_saturation (VTE_TERMINAL(tt->vte_term), 0);
+            vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), FALSE);
+            vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), 0xffff);
+        }
+    }    
+    return GDK_EVENT_STOP;
 }
 
 gint tilda_window_next_tab (tilda_window *tw)
@@ -481,7 +512,7 @@ gint tilda_window_setup_keyboard_accelerators (tilda_window *tw)
     tilda_add_config_accelerator("copy_key",         G_CALLBACK(ccopy),                          tw);
     tilda_add_config_accelerator("paste_key",        G_CALLBACK(cpaste),                         tw);
     tilda_add_config_accelerator("fullscreen_key",   G_CALLBACK(toggle_fullscreen_cb),           tw);
-
+    tilda_add_config_accelerator("toggle_transparency_key", G_CALLBACK(toggle_transparency), tw); 
     /* Set up keyboard shortcuts for Goto Tab # using key combinations defined in the config*/
     /* Know a better way? Then you do. */
     tilda_add_config_accelerator("gototab_1_key",  G_CALLBACK(goto_tab_1),  tw);
