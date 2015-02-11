@@ -75,6 +75,10 @@ gint tilda_term_free (struct tilda_term_ *term);
 void tilda_term_set_scrollbar_position (tilda_term *tt, enum tilda_term_scrollbar_positions pos);
 char* tilda_term_get_cwd(tilda_term* tt);
 
+//for access via hotkeys
+void increase_font_size_cb (GtkWidget *widget, gpointer data);
+void decrease_font_size_cb (GtkWidget *widget, gpointer data);
+
 #define TILDA_TERM(tt) ((tilda_term *)(tt))
 
 #define TERMINAL_PALETTE_SIZE 16

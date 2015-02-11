@@ -39,7 +39,7 @@ gchar *get_window_title (GtkWidget *widget)
     gchar *initial;
     gchar *title;
 
-    vte_title = vte_terminal_get_window_title (VTE_TERMINAL (widget));
+    vte_title =  vte_terminal_get_window_title (VTE_TERMINAL (widget)); //vte_terminal_get_current_directory_uri
     window_title = g_strdup (vte_title);
     initial = g_strdup (config_getstr ("title"));
 

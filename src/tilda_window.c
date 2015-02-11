@@ -168,6 +168,27 @@ gint toggle_transparency (tilda_window *tw)
     }    
     return GDK_EVENT_STOP;
 }
+/* Increase and Decrease affects all tabs at once */
+gint increase_font_size (tilda_window *tw) 
+{
+    tilda_term *tt;
+    int i;
+    for (i=0; i<g_list_length (tw->terms); i++) {
+        tt = g_list_nth_data (tw->terms, i);
+        increase_font_size_cb(tt->vte_term, tw->window);
+    }
+    return 0;
+}
+gint decrease_font_size (tilda_window *tw) 
+{
+    tilda_term *tt;
+    int i;
+    for (i=0; i<g_list_length (tw->terms); i++) {
+        tt = g_list_nth_data (tw->terms, i);
+        decrease_font_size_cb(tt->vte_term, tw->window);
+    } 
+    return 0;
+}
 
 gint tilda_window_next_tab (tilda_window *tw)
 {
@@ -513,6 +534,10 @@ gint tilda_window_setup_keyboard_accelerators (tilda_window *tw)
     tilda_add_config_accelerator("paste_key",        G_CALLBACK(cpaste),                         tw);
     tilda_add_config_accelerator("fullscreen_key",   G_CALLBACK(toggle_fullscreen_cb),           tw);
     tilda_add_config_accelerator("toggle_transparency_key", G_CALLBACK(toggle_transparency), tw); 
+    //_cb
+    tilda_add_config_accelerator("increase_font_size_key", G_CALLBACK(increase_font_size), tw); 
+    tilda_add_config_accelerator("decrease_font_size_key", G_CALLBACK(decrease_font_size), tw); 
+    
     /* Set up keyboard shortcuts for Goto Tab # using key combinations defined in the config*/
     /* Know a better way? Then you do. */
     tilda_add_config_accelerator("gototab_1_key",  G_CALLBACK(goto_tab_1),  tw);

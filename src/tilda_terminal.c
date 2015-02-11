@@ -51,8 +51,9 @@ static void maximize_window_cb (GtkWidget *widget, gpointer data);
 static void restore_window_cb (GtkWidget *widget, gpointer data);
 static void refresh_window_cb (GtkWidget *widget, gpointer data);
 static void move_window_cb (GtkWidget *widget, guint x, guint y, gpointer data);
-static void increase_font_size_cb (GtkWidget *widget, gpointer data);
-static void decrease_font_size_cb (GtkWidget *widget, gpointer data);
+//changed to non-static
+void increase_font_size_cb (GtkWidget *widget, gpointer data);
+void decrease_font_size_cb (GtkWidget *widget, gpointer data);
 
 
 gint tilda_term_free (struct tilda_term_ *term)
@@ -356,23 +357,25 @@ static void adjust_font_size (GtkWidget *widget, gpointer data, gint howmuch)
     /* Change the font, then resize the window so that we have the same
      * number of rows and columns. */
     vte_terminal_set_font (terminal, desired);
-    /*gtk_window_resize (GTK_WINDOW(data),
+    
+    config_setstr("font", pango_font_description_to_string (desired));
+    /* 
+    gtk_window_resize (GTK_WINDOW(data),
               columns * terminal->char_width + owidth,
-              rows * terminal->char_height + oheight);*/
-
+              rows * terminal->char_height + oheight);
+    */
     pango_font_description_free (desired);
 }
-
-static void increase_font_size_cb (GtkWidget *widget, gpointer data)
+//static
+void increase_font_size_cb (GtkWidget *widget, gpointer data)
 {
     DEBUG_FUNCTION ("increase_font_size");
     DEBUG_ASSERT (widget != NULL);
     DEBUG_ASSERT (data != NULL);
-
     adjust_font_size (widget, data, 1);
 }
-
-static void decrease_font_size_cb (GtkWidget *widget, gpointer data)
+//static
+void decrease_font_size_cb (GtkWidget *widget, gpointer data)
 {
     DEBUG_FUNCTION ("decrease_font_size");
     DEBUG_ASSERT (widget != NULL);
