@@ -24,6 +24,7 @@
 #include "key_grabber.h"
 #include "configsys.h"
 #include "callback_func.h"
+#include "tilda_window.h"
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -1268,41 +1269,21 @@ static void spin_y_position_value_changed_cb (GtkWidget *w)
     generate_animation_positions (tw);
 }
 
+
 static void check_enable_transparency_toggled_cb (GtkWidget *w)
 {
     const gboolean status = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(w));
+    
     const GtkWidget *label_level_of_transparency =
         GTK_WIDGET (gtk_builder_get_object (xml, "label_level_of_transparency"));
     const GtkWidget *spin_level_of_transparency =
         GTK_WIDGET (gtk_builder_get_object (xml, "spin_level_of_transparency"));
-
-    const gdouble transparency_level = (gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(spin_level_of_transparency)) / 100.0);
-    guint i;
-    tilda_term *tt;
-
-    config_setbool ("enable_transparency", status);
-
+        
+    /* Maybe keep these sensitive at all times instead ? */
     gtk_widget_set_sensitive (GTK_WIDGET(label_level_of_transparency), status);
     gtk_widget_set_sensitive (GTK_WIDGET(spin_level_of_transparency), status);
 
-    if (status)
-    {
-        for (i=0; i<g_list_length (tw->terms); i++) {
-            tt = g_list_nth_data (tw->terms, i);
-            vte_terminal_set_background_saturation (VTE_TERMINAL(tt->vte_term), transparency_level);
-            vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), !tw->have_argb_visual);
-            vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), (1.0 - transparency_level) * 0xffff);
-        }
-    }
-    else
-    {
-        for (i=0; i<g_list_length (tw->terms); i++) {
-            tt = g_list_nth_data (tw->terms, i);
-            vte_terminal_set_background_saturation (VTE_TERMINAL(tt->vte_term), 0);
-            vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), FALSE);
-            vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), 0xffff);
-        }
-    }
+    tilda_window_toggle_transparency(tw);
 }
 
 static void spin_level_of_transparency_value_changed_cb (GtkWidget *w)

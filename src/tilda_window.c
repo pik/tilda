@@ -138,12 +138,18 @@ gint toggle_fullscreen_cb (tilda_window *tw)
     return GDK_EVENT_STOP;
 } 
 
-gint toggle_transparency (tilda_window *tw)
+gint toggle_transparency_cb (tilda_window *tw)
 {
     DEBUG_FUNCTION ("toggle_transparency"); 
     DEBUG_ASSERT (tw != NULL);
-    guint i;
+    tilda_window_toggle_transparency(tw);
+    return GDK_EVENT_STOP;
+}
+
+void tilda_window_toggle_transparency (tilda_window *tw) 
+{
     tilda_term *tt;
+    int i;
     gboolean status = !config_getbool ("enable_transparency");
     config_setbool ("enable_transparency", status); 
     gdouble transparency_level = 0.0;
@@ -165,8 +171,7 @@ gint toggle_transparency (tilda_window *tw)
             vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), FALSE);
             vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), 0xffff);
         }
-    }    
-    return GDK_EVENT_STOP;
+    } 
 }
 
 /* Zoom helpers */
@@ -610,8 +615,8 @@ gint tilda_window_setup_keyboard_accelerators (tilda_window *tw)
     tilda_add_config_accelerator("copy_key",         G_CALLBACK(ccopy),                          tw);
     tilda_add_config_accelerator("paste_key",        G_CALLBACK(cpaste),                         tw);
     tilda_add_config_accelerator("fullscreen_key",   G_CALLBACK(toggle_fullscreen_cb),           tw);
-    tilda_add_config_accelerator("toggle_transparency_key", G_CALLBACK(toggle_transparency), tw); 
-    //_cb
+    tilda_add_config_accelerator("toggle_transparency_key", G_CALLBACK(toggle_transparency_cb), tw); 
+    
     tilda_add_config_accelerator("increase_font_size_key", G_CALLBACK(increase_font_size), tw); 
     tilda_add_config_accelerator("decrease_font_size_key", G_CALLBACK(decrease_font_size), tw);
     tilda_add_config_accelerator("normalize_font_size_key", G_CALLBACK(normalize_font_size), tw);

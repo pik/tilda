@@ -154,6 +154,11 @@ void tilda_window_close_current_tab (tilda_window *tw);
  */
 gint tilda_window_setup_keyboard_accelerators (tilda_window *tw);
 
+/**
+ * Toggles transparency on all terms
+ */
+void tilda_window_toggle_transparency(tilda_window *tw); 
+
 #define TILDA_WINDOW(data) ((tilda_window *)(data))
 
 /* Allow scales a bit smaller and a bit larger than the usual pango ranges */
