@@ -23,6 +23,7 @@
 
 G_BEGIN_DECLS
 
+void wizard_toggle_transparency(tilda_window *tw); 
 gint wizard (tilda_window *tw);
 void show_invalid_keybinding_dialog (GtkWindow *parent_window, const gchar* message);
 

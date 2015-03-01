@@ -1268,23 +1268,14 @@ static void spin_y_position_value_changed_cb (GtkWidget *w)
     generate_animation_positions (tw);
 }
 
-static void check_enable_transparency_toggled_cb (GtkWidget *w)
+void wizard_toggle_transparency (tilda_window *tw) 
 {
-    const gboolean status = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(w));
-    const GtkWidget *label_level_of_transparency =
-        GTK_WIDGET (gtk_builder_get_object (xml, "label_level_of_transparency"));
-    const GtkWidget *spin_level_of_transparency =
-        GTK_WIDGET (gtk_builder_get_object (xml, "spin_level_of_transparency"));
-
-    const gdouble transparency_level = (gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON(spin_level_of_transparency)) / 100.0);
-    guint i;
     tilda_term *tt;
-
-    config_setbool ("enable_transparency", status);
-
-    gtk_widget_set_sensitive (GTK_WIDGET(label_level_of_transparency), status);
-    gtk_widget_set_sensitive (GTK_WIDGET(spin_level_of_transparency), status);
-
+    int i;
+    gboolean status = !config_getbool ("enable_transparency");
+    config_setbool ("enable_transparency", status); 
+    gdouble transparency_level = 0.0;
+    transparency_level = ((gdouble) config_getint ("transparency"))/100;
     if (status)
     {
         for (i=0; i<g_list_length (tw->terms); i++) {
@@ -1302,7 +1293,22 @@ static void check_enable_transparency_toggled_cb (GtkWidget *w)
             vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), FALSE);
             vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), 0xffff);
         }
-    }
+    } 
+}
+static void check_enable_transparency_toggled_cb (GtkWidget *w)
+{
+    const gboolean status = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(w));
+    
+    const GtkWidget *label_level_of_transparency =
+        GTK_WIDGET (gtk_builder_get_object (xml, "label_level_of_transparency"));
+    const GtkWidget *spin_level_of_transparency =
+        GTK_WIDGET (gtk_builder_get_object (xml, "spin_level_of_transparency"));
+        
+    /* Maybe keep these sensitive at all times instead ? */
+    gtk_widget_set_sensitive (GTK_WIDGET(label_level_of_transparency), status);
+    gtk_widget_set_sensitive (GTK_WIDGET(spin_level_of_transparency), status);
+
+    wizard_toggle_transparency(tw);
 }
 
 static void spin_level_of_transparency_value_changed_cb (GtkWidget *w)
