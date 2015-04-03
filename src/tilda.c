@@ -325,7 +325,7 @@ static gboolean parse_cli (int argc, char *argv[])
     gchar *working_dir = config_getstr ("working_dir");
 
     gint lines = config_getint ("lines");
-    gint transparency = config_getint ("transparency");
+    gint back_alpha = config_getint ("back_alpha");
     gint x_pos = config_getint ("x_pos");
     gint y_pos = config_getint ("y_pos");
 
@@ -344,7 +344,7 @@ static gboolean parse_cli (int argc, char *argv[])
         { "font",               'f', 0, G_OPTION_ARG_STRING,    &font,              N_("Set the font to the following string"), NULL },
         { "lines",              'l', 0, G_OPTION_ARG_INT,       &lines,             N_("Scrollback Lines"), NULL },
         { "scrollbar",          's', 0, G_OPTION_ARG_NONE,      &scrollbar,         N_("Use Scrollbar"), NULL },
-        { "transparency",       't', 0, G_OPTION_ARG_INT,       &transparency,      N_("Opaqueness: 0-100%"), NULL },
+        { "back_alpha",       't', 0, G_OPTION_ARG_INT,       &back_alpha,      N_("Opaqueness: 0-100%"), NULL },
         { "version",            'v', 0, G_OPTION_ARG_NONE,      &version,           N_("Print the version, then exit"), NULL },
         { "working-dir",        'w', 0, G_OPTION_ARG_STRING,    &working_dir,       N_("Set Initial Working Directory"), NULL },
         { "x-pos",              'x', 0, G_OPTION_ARG_INT,       &x_pos,             N_("X Position"), NULL },
@@ -425,10 +425,10 @@ static gboolean parse_cli (int argc, char *argv[])
 
     if (lines != config_getint ("lines"))
         config_setint ("lines", lines);
-    if (transparency != config_getint ("transparency"))
+    if (back_alpha != config_getint ("back_alpha"))
     {
-        config_setbool ("enable_transparency", transparency);
-        config_setint ("transparency", transparency);
+        config_setbool ("enable_transparency", ~back_alpha & 0xffff);
+        config_setint ("back_alpha", back_alpha);
     }
     if (x_pos != config_getint ("x_pos"))
         config_setint ("x_pos", x_pos);

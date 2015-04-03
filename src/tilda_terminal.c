@@ -22,6 +22,7 @@
 #include "callback_func.h"
 #include "configsys.h"
 #include "wizard.h" /* wizard */
+#include "key_grabber.h"
 
 #include <stdio.h>
 #include <stdlib.h> /* malloc */
@@ -40,7 +41,6 @@ static gint start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command,
 static gint tilda_term_config_defaults (tilda_term *tt);
 static void child_exited_cb (GtkWidget *widget, gpointer data);
 static void window_title_changed_cb (GtkWidget *widget, gpointer data);
-static void status_line_changed_cb (GtkWidget *widget, gpointer data);
 static int button_press_cb (GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gboolean key_press_cb (GtkWidget *widget, GdkEvent  *event, tilda_term *terminal);
 static void iconify_window_cb (GtkWidget *widget, gpointer data);
@@ -122,8 +122,8 @@ struct tilda_term_ *tilda_term_init (struct tilda_window_ *tw)
                       G_CALLBACK(window_title_changed_cb), term);
     g_signal_connect (G_OBJECT(term->vte_term), "eof",
                       G_CALLBACK(child_exited_cb), term);
-    g_signal_connect (G_OBJECT(term->vte_term), "status-line-changed",
-                      G_CALLBACK(status_line_changed_cb), term);
+    /*g_signal_connect (G_OBJECT(term->vte_term), "status-line-changed",
+                      G_CALLBACK(status_line_changed_cb), term); */
     g_signal_connect (G_OBJECT(term->vte_term), "button-press-event",
                       G_CALLBACK(button_press_cb), term);
     g_signal_connect (G_OBJECT(term->vte_term), "key-press-event",
@@ -219,14 +219,6 @@ static void window_title_changed_cb (GtkWidget *widget, gpointer data)
     }
 
     g_free (title);
-}
-
-static void status_line_changed_cb (GtkWidget *widget, G_GNUC_UNUSED gpointer data)
-{
-    DEBUG_FUNCTION ("status_line_changed_cb");
-    DEBUG_ASSERT (widget != NULL);
-
-    g_print ("Status = `%s'.\n", vte_terminal_get_status_line (VTE_TERMINAL(widget)));
 }
 
 static void iconify_window_cb (G_GNUC_UNUSED GtkWidget *widget, gpointer data)
@@ -406,7 +398,7 @@ static gint start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command,
         envv[0] = getenv("PATH");
         envv[1] = NULL;
 
-        ret = vte_terminal_fork_command_full (VTE_TERMINAL (tt->vte_term),
+        ret = vte_terminal_spawn_sync (VTE_TERMINAL (tt->vte_term),
             VTE_PTY_DEFAULT, /* VtePtyFlags pty_flags */
             working_dir, /* const char *working_directory */
             argv, /* char **argv */
@@ -415,6 +407,7 @@ static gint start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command,
             NULL, /* GSpawnChildSetupFunc child_setup */
             NULL, /* gpointer child_setup_data */
             &tt->pid, /* GPid *child_pid */
+            NULL, /* GCancellable * cancellable, */
             NULL  /* GError **error */
             );
 
@@ -478,7 +471,7 @@ launch_default_shell:
         argv[1] = NULL;
     }
 
-    ret = vte_terminal_fork_command_full (VTE_TERMINAL (tt->vte_term),
+    ret = vte_terminal_spawn_sync (VTE_TERMINAL (tt->vte_term),
         VTE_PTY_DEFAULT, /* VtePtyFlags pty_flags */
         working_dir, /* const char *working_directory */
         argv, /* char **argv */
@@ -487,6 +480,7 @@ launch_default_shell:
         NULL, /* GSpawnChildSetupFunc child_setup */
         NULL, /* gpointer child_setup_data */
         &tt->pid, /* GPid *child_pid */
+        NULL, /* GCancellable *cancellable */
         NULL  /* GError **error */
         );
     g_free(argv1);
@@ -553,7 +547,6 @@ static gint tilda_term_config_defaults (tilda_term *tt)
     DEBUG_FUNCTION ("tilda_term_config_defaults");
     DEBUG_ASSERT (tt != NULL);
 
-    gdouble transparency_level = 0.0;
     GdkRGBA fg, bg;
     gchar* word_chars;
     gint i;
@@ -562,7 +555,7 @@ static gint tilda_term_config_defaults (tilda_term *tt)
     bg.red   =    GUINT16_TO_FLOAT(config_getint ("back_red"));
     bg.green =    GUINT16_TO_FLOAT(config_getint ("back_green"));
     bg.blue  =    GUINT16_TO_FLOAT(config_getint ("back_blue"));
-    bg.alpha =    1.0;
+    bg.alpha =    (config_getbool("enable_transparency") ? GUINT16_TO_FLOAT(config_getint ("back_alpha")) : 1.0);
 
     fg.red   =    GUINT16_TO_FLOAT(config_getint ("text_red"));
     fg.green =    GUINT16_TO_FLOAT(config_getint ("text_green"));
@@ -575,19 +568,20 @@ static gint tilda_term_config_defaults (tilda_term *tt)
         current_palette[i].blue  = GUINT16_TO_FLOAT(config_getnint ("palette", i*3+2));
         current_palette[i].alpha = 1.0;
     }
-
-    vte_terminal_set_colors_rgba (VTE_TERMINAL(tt->vte_term), &fg, &bg, current_palette, TERMINAL_PALETTE_SIZE);
+    
+    /* vte colors now rgba by default */
+    vte_terminal_set_colors (VTE_TERMINAL(tt->vte_term), &fg, &bg, current_palette, TERMINAL_PALETTE_SIZE);
 
     /** Bells **/
     vte_terminal_set_audible_bell (VTE_TERMINAL(tt->vte_term), config_getbool ("bell"));
-    vte_terminal_set_visible_bell (VTE_TERMINAL(tt->vte_term), config_getbool ("bell"));
+    //vte_terminal_set_visible_bell (VTE_TERMINAL(tt->vte_term), config_getbool ("bell"));
 
     /** Cursor **/
     vte_terminal_set_cursor_blink_mode (VTE_TERMINAL(tt->vte_term),
             (config_getbool ("blinks"))?VTE_CURSOR_BLINK_ON:VTE_CURSOR_BLINK_OFF);
 
     /** Scrolling **/
-    vte_terminal_set_scroll_background (VTE_TERMINAL(tt->vte_term), config_getbool ("scroll_background"));
+    //vte_terminal_set_scroll_background (VTE_TERMINAL(tt->vte_term), config_getbool ("scroll_background"));
     vte_terminal_set_scroll_on_output (VTE_TERMINAL(tt->vte_term), config_getbool ("scroll_on_output"));
     vte_terminal_set_scroll_on_keystroke (VTE_TERMINAL(tt->vte_term), config_getbool ("scroll_on_key"));
 
@@ -638,29 +632,6 @@ static gint tilda_term_config_defaults (tilda_term *tt)
             vte_terminal_set_delete_binding (VTE_TERMINAL(tt->vte_term), VTE_ERASE_AUTO);
             break;
     }
-
-    /** Word chars **/
-    word_chars =  config_getstr ("word_chars");
-    if (NULL == word_chars || '\0' == *word_chars) {
-        word_chars = DEFAULT_WORD_CHARS;
-    }
-    vte_terminal_set_word_chars (VTE_TERMINAL(tt->vte_term), word_chars);
-
-    /** Background **/
-    if (config_getbool ("use_image"))
-        vte_terminal_set_background_image_file (VTE_TERMINAL(tt->vte_term), config_getstr ("image"));
-    else
-        vte_terminal_set_background_image_file (VTE_TERMINAL(tt->vte_term), NULL);
-
-    transparency_level = ((gdouble) config_getint ("transparency"))/100;
-
-    if (config_getbool ("enable_transparency") && transparency_level > 0)
-    {
-        vte_terminal_set_background_saturation (VTE_TERMINAL (tt->vte_term), transparency_level);
-        vte_terminal_set_opacity (VTE_TERMINAL (tt->vte_term), (1.0 - transparency_level) * 0xffff);
-        vte_terminal_set_background_transparent (VTE_TERMINAL(tt->vte_term), !tt->tw->have_argb_visual);
-    }
-
     return 0;
 }
 
@@ -698,6 +669,10 @@ menu_preferences_cb (GSimpleAction *action,
 {
     DEBUG_FUNCTION ("menu_config_cb");
     DEBUG_ASSERT (user_data != NULL);
+    tilda_window *tw = TILDA_WINDOW(user_data);
+
+    /* Pull up the window first */
+    pull(tw, PULL_UP, TRUE);
 
     /* Show the config wizard */
     wizard (TILDA_WINDOW(user_data));
@@ -888,11 +863,9 @@ static int button_press_cb (G_GNUC_UNUSED GtkWidget *widget, GdkEventButton *eve
             break;
         case 1: /* Left Click */
             terminal  = VTE_TERMINAL(tt->vte_term);
-            GtkBorder border;
-            gtk_widget_style_get (GTK_WIDGET (terminal),
-                "inner-border", &border, NULL);
 
-            ypad = border.bottom;
+            ypad = gtk_widget_get_margin_bottom(GTK_WIDGET(terminal));
+            g_warning("Ypad %i", ypad);
             match = vte_terminal_match_check (terminal,
                     (event->x - ypad) /
                     vte_terminal_get_char_width (terminal),

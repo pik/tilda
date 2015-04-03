@@ -68,10 +68,10 @@ static cfg_opt_t config_opts[] = {
     CFG_STR("background_color", "white", CFGF_NONE),
     CFG_STR("working_dir", NULL, CFGF_NONE),
     CFG_STR("web_browser", "x-www-browser", CFGF_NONE),
-    CFG_STR("word_chars", DEFAULT_WORD_CHARS, CFGF_NONE),
     CFG_STR("increase_font_size_key", "<Control>equal", CFGF_NONE),
     CFG_STR("decrease_font_size_key", "<Control>minus", CFGF_NONE),
     CFG_STR("normalize_font_size_key", "<Control>0", CFGF_NONE),
+    CFG_STR("show_on_monitor", "", CFGF_NONE),
 
     /* ints */
     CFG_INT("lines", 100, CFGF_NONE),
@@ -96,8 +96,6 @@ static cfg_opt_t config_opts[] = {
     CFG_INT("palette_scheme", 0, CFGF_NONE),
     CFG_INT("non_focus_pull_up_behaviour", 0, CFGF_NONE),
 
-    /* The default monitor number is 0 */
-    CFG_INT("show_on_monitor_number", 0, CFGF_NONE),
     /* The length of a tab title */
     CFG_INT("title_max_length", 25, CFGF_NONE),
 
@@ -126,6 +124,7 @@ static cfg_opt_t config_opts[] = {
     CFG_INT("back_red", 0x0000, CFGF_NONE),
     CFG_INT("back_green", 0x0000, CFGF_NONE),
     CFG_INT("back_blue", 0x0000, CFGF_NONE),
+    CFG_INT("back_alpha", 0xffff, CFGF_NONE), 
     CFG_INT("text_red", 0xffff, CFGF_NONE),
     CFG_INT("text_green", 0xffff, CFGF_NONE),
     CFG_INT("text_blue", 0xffff, CFGF_NONE),

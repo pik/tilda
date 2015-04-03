@@ -158,29 +158,20 @@ gint toggle_transparency_cb (tilda_window *tw)
 void tilda_window_toggle_transparency (tilda_window *tw) 
 {
     tilda_term *tt;
-    int i;
+    GdkRGBA bg; 
+    guint i;
     gboolean status = !config_getbool ("enable_transparency");
+    bg.red   =    GUINT16_TO_FLOAT(config_getint ("back_red"));
+    bg.green =    GUINT16_TO_FLOAT(config_getint ("back_green"));
+    bg.blue  =    GUINT16_TO_FLOAT(config_getint ("back_blue"));
+    bg.alpha =    (status ? GUINT16_TO_FLOAT(config_getint ("back_alpha")) : 1.0);
+    
     config_setbool ("enable_transparency", status); 
-    gdouble transparency_level = 0.0;
-    transparency_level = ((gdouble) config_getint ("transparency"))/100;
-    if (status)
-    {
-        for (i=0; i<g_list_length (tw->terms); i++) {
+    
+    for (i=0; i<g_list_length (tw->terms); i++) {
             tt = g_list_nth_data (tw->terms, i);
-            vte_terminal_set_background_saturation (VTE_TERMINAL(tt->vte_term), transparency_level);
-            vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), !tw->have_argb_visual);
-            vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), (1.0 - transparency_level) * 0xffff);
-        }
-    }
-    else
-    {
-        for (i=0; i<g_list_length (tw->terms); i++) {
-            tt = g_list_nth_data (tw->terms, i);
-            vte_terminal_set_background_saturation (VTE_TERMINAL(tt->vte_term), 0);
-            vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), FALSE);
-            vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), 0xffff);
-        }
-    } 
+            vte_terminal_set_color_background(VTE_TERMINAL(tt->vte_term), &bg);
+        }    
 }
 
 /* Zoom helpers */
