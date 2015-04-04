@@ -137,7 +137,7 @@ void tilda_window_set_active (tilda_window *tw)
     {
         guint32 timestamp = gtk_get_current_event_time ();
         if (timestamp == 0) {
-            timestamp = gdk_x11_get_server_time(gtk_widget_get_root_window (tw->window));
+            timestamp = gdk_x11_get_server_time(gdk_screen_get_root_window (screen));
         }
         event.xclient.type = ClientMessage;
         event.xclient.serial = 0;
@@ -152,7 +152,6 @@ void tilda_window_set_active (tilda_window *tw)
         event.xclient.data.l[2] = 0;
         event.xclient.data.l[3] = 0;
         event.xclient.data.l[4] = 0;
-
         XSendEvent (x11_display, x11_root_window, False, mask, &event);
     }
     else
@@ -201,7 +200,7 @@ void pull (struct tilda_window_ *tw, enum pull_state state, gboolean force_hide)
         TRACE (g_print("Tilda window not focused but visible\n"));
         gdk_x11_window_set_user_time(gtk_widget_get_window(tw->window),
                 tomboy_keybinder_get_current_event_time());
-        //tilda_window_set_active(tw);
+        tilda_window_set_active(tw);
     } else
     if (tw->current_state == UP && state != PULL_UP) {
         /* Keep things here just like they are. If you use gtk_window_present() here, you
@@ -220,7 +219,7 @@ void pull (struct tilda_window_ *tw, enum pull_state state, gboolean force_hide)
         /* Nasty code to make metacity behave. Starting at metacity-2.22 they "fixed" the
          * focus stealing prevention to make the old _NET_WM_USER_TIME hack
          * not work anymore. This is working for now... */
-        //tilda_window_set_active (tw);
+        tilda_window_set_active (tw);
 
         /* The window should maintain its properties when it is merely hidden, but it does
          * not. If you delete the following call, the window will not remain visible
