@@ -39,7 +39,6 @@ static cfg_opt_t config_opts[] = {
 
     /* strings */
     CFG_STR("tilda_config_version", PACKAGE_VERSION, CFGF_NONE),
-    CFG_STR("image", NULL, CFGF_NONE),
     CFG_STR("command", "", CFGF_NONE),
     CFG_STR("font", "Monospace 11", CFGF_NONE),
     CFG_STR("key", NULL, CFGF_NONE),
@@ -131,12 +130,10 @@ static cfg_opt_t config_opts[] = {
 
     /* booleans */
     CFG_BOOL("scroll_history_infinite", FALSE, CFGF_NONE),
-    CFG_BOOL("scroll_background", TRUE, CFGF_NONE),
     CFG_BOOL("scroll_on_output", FALSE, CFGF_NONE),
     CFG_BOOL("notebook_border", FALSE, CFGF_NONE),
     CFG_BOOL("antialias", TRUE, CFGF_NONE),
     CFG_BOOL("scrollbar", FALSE, CFGF_NONE),
-    CFG_BOOL("use_image", FALSE, CFGF_NONE),
     CFG_BOOL("grab_focus", TRUE, CFGF_NONE),
     CFG_BOOL("above", TRUE, CFGF_NONE),
     CFG_BOOL("notaskbar", TRUE, CFGF_NONE),

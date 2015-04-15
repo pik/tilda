@@ -321,7 +321,6 @@ static gboolean parse_cli (int argc, char *argv[])
     gchar *background_color = config_getstr ("background_color");
     gchar *command = config_getstr ("command");
     gchar *font = config_getstr ("font");
-    gchar *image = config_getstr ("image");
     gchar *working_dir = config_getstr ("working_dir");
 
     gint lines = config_getint ("lines");
@@ -349,7 +348,6 @@ static gboolean parse_cli (int argc, char *argv[])
         { "working-dir",        'w', 0, G_OPTION_ARG_STRING,    &working_dir,       N_("Set Initial Working Directory"), NULL },
         { "x-pos",              'x', 0, G_OPTION_ARG_INT,       &x_pos,             N_("X Position"), NULL },
         { "y-pos",              'y', 0, G_OPTION_ARG_INT,       &y_pos,             N_("Y Position"), NULL },
-        { "image",              'B', 0, G_OPTION_ARG_STRING,    &image,             N_("Set Background Image"), NULL },
         { "config",             'C', 0, G_OPTION_ARG_NONE,      &show_config,       N_("Show Configuration Wizard"), NULL },
         { NULL }
     };
@@ -413,10 +411,6 @@ static gboolean parse_cli (int argc, char *argv[])
     if (font != config_getstr ("font")) {
         config_setstr ("font", font);
         g_free(font);
-    }
-    if (image != config_getstr ("image")) {
-        config_setstr ("image", image);
-        g_free(image);
     }
     if (working_dir != config_getstr ("working_dir")) {
         config_setstr ("working_dir", working_dir);

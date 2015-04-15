@@ -22,7 +22,6 @@
 #include "callback_func.h"
 #include "configsys.h"
 #include "wizard.h" /* wizard */
-#include "key_grabber.h"
 
 #include <stdio.h>
 #include <stdlib.h> /* malloc */
@@ -122,8 +121,6 @@ struct tilda_term_ *tilda_term_init (struct tilda_window_ *tw)
                       G_CALLBACK(window_title_changed_cb), term);
     g_signal_connect (G_OBJECT(term->vte_term), "eof",
                       G_CALLBACK(child_exited_cb), term);
-    /*g_signal_connect (G_OBJECT(term->vte_term), "status-line-changed",
-                      G_CALLBACK(status_line_changed_cb), term); */
     g_signal_connect (G_OBJECT(term->vte_term), "button-press-event",
                       G_CALLBACK(button_press_cb), term);
     g_signal_connect (G_OBJECT(term->vte_term), "key-press-event",
@@ -569,19 +566,17 @@ static gint tilda_term_config_defaults (tilda_term *tt)
         current_palette[i].alpha = 1.0;
     }
     
-    /* vte colors now rgba by default */
+    /* Set vte colors and alpha (now rgba by default) */
     vte_terminal_set_colors (VTE_TERMINAL(tt->vte_term), &fg, &bg, current_palette, TERMINAL_PALETTE_SIZE);
 
     /** Bells **/
     vte_terminal_set_audible_bell (VTE_TERMINAL(tt->vte_term), config_getbool ("bell"));
-    //vte_terminal_set_visible_bell (VTE_TERMINAL(tt->vte_term), config_getbool ("bell"));
 
     /** Cursor **/
     vte_terminal_set_cursor_blink_mode (VTE_TERMINAL(tt->vte_term),
             (config_getbool ("blinks"))?VTE_CURSOR_BLINK_ON:VTE_CURSOR_BLINK_OFF);
 
     /** Scrolling **/
-    //vte_terminal_set_scroll_background (VTE_TERMINAL(tt->vte_term), config_getbool ("scroll_background"));
     vte_terminal_set_scroll_on_output (VTE_TERMINAL(tt->vte_term), config_getbool ("scroll_on_output"));
     vte_terminal_set_scroll_on_keystroke (VTE_TERMINAL(tt->vte_term), config_getbool ("scroll_on_key"));
 
@@ -669,10 +664,6 @@ menu_preferences_cb (GSimpleAction *action,
 {
     DEBUG_FUNCTION ("menu_config_cb");
     DEBUG_ASSERT (user_data != NULL);
-    tilda_window *tw = TILDA_WINDOW(user_data);
-
-    /* Pull up the window first */
-    pull(tw, PULL_UP, TRUE);
 
     /* Show the config wizard */
     wizard (TILDA_WINDOW(user_data));
@@ -865,7 +856,6 @@ static int button_press_cb (G_GNUC_UNUSED GtkWidget *widget, GdkEventButton *eve
             terminal  = VTE_TERMINAL(tt->vte_term);
 
             ypad = gtk_widget_get_margin_bottom(GTK_WIDGET(terminal));
-            g_warning("Ypad %i", ypad);
             match = vte_terminal_match_check (terminal,
                     (event->x - ypad) /
                     vte_terminal_get_char_width (terminal),

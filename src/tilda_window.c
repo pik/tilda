@@ -812,7 +812,6 @@ gboolean tilda_window_init (const gchar *config_file, const gint instance, tilda
     /* Create GDK resources now, to prevent crashes later on */
     gtk_widget_realize (tw->window);
     generate_animation_positions (tw);
-
     return TRUE;
 }
 

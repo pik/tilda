@@ -691,7 +691,7 @@ static int combo_monitor_selection_changed_cb(GtkWidget* widget) {
                        1, &new_monitor_number,
                        -1);
 
-	//Save the new monitor value
+	/* Save the new monitor name */
 	config_setstr("show_on_monitor", new_monitor_name);
 	GdkRectangle* current_rectangle = rect + new_monitor_number;
 	GdkRectangle* last_rectangle = rect + last_monitor;
@@ -855,7 +855,6 @@ static void check_terminal_bell_toggled_cb (GtkWidget *w)
     for (i=0; i<g_list_length (tw->terms); i++) {
         tt = g_list_nth_data (tw->terms, i);
         vte_terminal_set_audible_bell (VTE_TERMINAL(tt->vte_term), status);
-        //vte_terminal_set_visible_bell (VTE_TERMINAL(tt->vte_term), !status);
     }
 }
 
@@ -1137,25 +1136,6 @@ static void entry_web_browser_changed (GtkWidget *w) {
 }
 
 /*
-static void entry_word_chars_changed (GtkWidget *w)
-{
-    guint i;
-    tilda_term *tt;
-    const gchar *word_chars = gtk_entry_get_text (GTK_ENTRY(w));
-
-    if (NULL == word_chars || '\0' == word_chars[0])
-        word_chars = DEFAULT_WORD_CHARS;
-
-    config_setstr ("word_chars", word_chars);
-
-    for (i=0; i<g_list_length (tw->terms); i++) {
-        tt = g_list_nth_data (tw->terms, i);
-        vte_terminal_set_word_chars (VTE_TERMINAL(tt->vte_term), word_chars);
-    }
-}
-*/
-
-/*
  * Finds the coordinate that will center the tilda window in the screen.
  *
  * If you want to center the tilda window on the top or bottom of the screen,
@@ -1397,7 +1377,6 @@ static void spin_level_of_transparency_value_changed_cb (GtkWidget *w)
     bg.blue  =    GUINT16_TO_FLOAT(config_getint ("back_blue"));
     bg.alpha =    1.0 - (status / 100.0);
     
-    g_printerr("Status %i \n", status);
     config_setint ("back_alpha", (100 - status) * 0x290 - 65);
     
     for (i=0; i<g_list_length (tw->terms); i++) {
@@ -1459,49 +1438,6 @@ static void check_animated_pulldown_toggled_cb (GtkWidget *w)
         gtk_window_resize (GTK_WINDOW(tw->window), 1, 1);
     }
 }
-/*
-static void check_use_image_for_background_toggled_cb (GtkWidget *w)
-{
-    const gboolean status = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(w));
-    const GtkWidget *button_background_image =
-        GTK_WIDGET (gtk_builder_get_object (xml, "button_background_image"));
-
-    const gchar *image = config_getstr ("image");
-    guint i;
-    tilda_term *tt;
-
-
-    config_setbool ("use_image", status);
-
-    gtk_widget_set_sensitive (GTK_WIDGET(button_background_image), status);
-
-    for (i=0; i<g_list_length (tw->terms); i++) {
-        tt = g_list_nth_data (tw->terms, i);
-
-        if (status)
-            vte_terminal_set_background_image_file (VTE_TERMINAL(tt->vte_term), image);
-        else
-            vte_terminal_set_background_image_file (VTE_TERMINAL(tt->vte_term), NULL);
-    }
-}
-
-static void button_background_image_selection_changed_cb (GtkWidget *w)
-{
-    const gchar *image = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(w));
-    guint i;
-    tilda_term *tt;
-
-    config_setstr ("image", image);
-
-    if (config_getbool ("use_image"))
-    {
-        for (i=0; i<g_list_length (tw->terms); i++) {
-            tt = g_list_nth_data (tw->terms, i);
-            vte_terminal_set_background_image_file (VTE_TERMINAL(tt->vte_term), image);
-        }
-    }
-}
-* */
 
 static void combo_colorschemes_changed_cb (GtkWidget *w)
 {
@@ -2008,9 +1944,8 @@ static void initialize_combo_choose_monitor() {
 	gint i;
 
     gtk_list_store_clear(monitor_model);
-
-	/* The loop starts at 1 because 0 is already in the list store by default. This is set in
-	 * the list store definition in the GtkBuilder file. */
+    
+    /* the list store definition in the GtkBuilder file. */
 	for (i = 0; i < num_monitors; i++) {
 		gtk_list_store_append(monitor_model, &iter);
 		gtk_list_store_set(monitor_model, &iter,
@@ -2129,7 +2064,6 @@ static void set_wizard_state_from_config () {
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_custom_command", "run_command");
 
     TEXT_ENTRY ("entry_web_browser", "web_browser");
-    //TEXT_ENTRY ("entry_word_chars", "word_chars");
 
     /* Appearance Tab */
     /* Initialize the monitor chooser combo box with the numbers of the monitor */
@@ -2143,19 +2077,13 @@ static void set_wizard_state_from_config () {
     CHECK_BUTTON ("check_animated_pulldown", "animation");
     SPIN_BUTTON ("spin_animation_delay", "slide_sleep_usec");
     COMBO_BOX ("combo_animation_orientation", "animation_orientation");
-    CHECK_BUTTON ("check_use_image_for_background", "use_image");
 
-    char* filename = config_getstr ("image");
-    if(filename != NULL) {
-        FILE_BUTTON ("button_background_image", filename);
-    }
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_level_of_transparency","enable_transparency");
     SET_SENSITIVE_BY_CONFIG_BOOL ("spin_level_of_transparency","enable_transparency");
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_animation_delay","animation");
     SET_SENSITIVE_BY_CONFIG_BOOL ("spin_animation_delay","animation");
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_animation_orientation","animation");
     SET_SENSITIVE_BY_CONFIG_BOOL ("combo_animation_orientation","animation");
-    SET_SENSITIVE_BY_CONFIG_BOOL ("button_background_image","use_image");
 
     /* Colors Tab */
     COMBO_BOX ("combo_colorschemes", "scheme");
@@ -2189,7 +2117,6 @@ static void set_wizard_state_from_config () {
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_scrollback_lines", "scroll_history_infinite");
     CHECK_BUTTON ("check_scroll_on_output", "scroll_on_output");
     CHECK_BUTTON ("check_scroll_on_keystroke", "scroll_on_key");
-    CHECK_BUTTON ("check_scroll_background", "scroll_background");
 
     /* Compatibility Tab */
     COMBO_BOX ("combo_backspace_binding", "backspace_key");
@@ -2267,7 +2194,6 @@ static void connect_wizard_signals ()
 
     CONNECT_SIGNAL ("entry_web_browser","changed",entry_web_browser_changed);
     CONNECT_SIGNAL ("entry_web_browser","focus-out-event", validate_executable_command_cb);
-    //CONNECT_SIGNAL ("entry_word_chars","changed",entry_word_chars_changed);
 
     /* Appearance Tab */
     CONNECT_SIGNAL ("combo_choose_monitor", "changed", combo_monitor_selection_changed_cb);
@@ -2283,11 +2209,9 @@ static void connect_wizard_signals ()
 
     CONNECT_SIGNAL ("check_enable_transparency","toggled",check_enable_transparency_toggled_cb);
     CONNECT_SIGNAL ("check_animated_pulldown","toggled",check_animated_pulldown_toggled_cb);
-    //CONNECT_SIGNAL ("check_use_image_for_background","toggled",check_use_image_for_background_toggled_cb);
     CONNECT_SIGNAL ("spin_level_of_transparency","value-changed",spin_level_of_transparency_value_changed_cb);
     CONNECT_SIGNAL ("spin_animation_delay","value-changed",spin_animation_delay_value_changed_cb);
     CONNECT_SIGNAL ("combo_animation_orientation","changed",combo_animation_orientation_changed_cb);
-    //CONNECT_SIGNAL ("button_background_image","selection-changed",button_background_image_selection_changed_cb);
 
     /* Colors Tab */
     CONNECT_SIGNAL ("combo_colorschemes","changed",combo_colorschemes_changed_cb);
@@ -2307,7 +2231,6 @@ static void connect_wizard_signals ()
     CONNECT_SIGNAL ("check_infinite_scrollback", "toggled", check_infinite_scrollback_toggled_cb);
     CONNECT_SIGNAL ("check_scroll_on_output","toggled",check_scroll_on_output_toggled_cb);
     CONNECT_SIGNAL ("check_scroll_on_keystroke","toggled",check_scroll_on_keystroke_toggled_cb);
-    //CONNECT_SIGNAL ("check_scroll_background","toggled",check_scroll_background_toggled_cb);
 
     /* Compatibility Tab */
     CONNECT_SIGNAL ("combo_backspace_binding","changed",combo_backspace_binding_changed_cb);
