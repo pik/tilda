@@ -1,3 +1,6 @@
+changequote(<@, @>)dnl
+define(<@m4_section_1@>, 
+<@dnl
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.16.1 -->
 <interface>
@@ -1014,8 +1017,10 @@
                 <property name="margin_bottom">4</property>
                 <property name="row_spacing">4</property>
                 <property name="column_homogeneous">True</property>
-                <child>
-                  <object class="GtkFrame" id="frame_word_chars">
+                <child> @>)dnl
+define(<@m4_frame_word_chars@>, 
+<@dnl
+                <object class="GtkFrame" id="frame_word_chars">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
@@ -1069,7 +1074,9 @@
                           </object>
                         </child>
                       </object>
-                    </child>
+                    </child> @>)dnl
+define(<@m4_section_2@>, 
+<@dnl
                     <child type="label">
                       <object class="GtkLabel" id="label24">
                         <property name="visible">True</property>
@@ -2025,7 +2032,9 @@
                                 <property name="width">1</property>
                                 <property name="height">1</property>
                               </packing>
-                            </child>
+                            </child> @>)dnl
+define(<@m4_button_background_image@>, 
+<@dnl
                             <child>
                               <object class="GtkFileChooserButton" id="button_background_image">
                                 <property name="visible">True</property>
@@ -2037,7 +2046,9 @@
                                 <property name="width">2</property>
                                 <property name="height">1</property>
                               </packing>
-                            </child>
+                            </child> @>)dnl
+define(<@m4_check_use_image_for_background@>, 
+<@dnl
                             <child>
                               <object class="GtkCheckButton" id="check_use_image_for_background">
                                 <property name="label" translatable="yes">Use Image for Background</property>
@@ -2053,7 +2064,9 @@
                                 <property name="width">1</property>
                                 <property name="height">1</property>
                               </packing>
-                            </child>
+                            </child> @>)dnl
+define(<@m4_section_3@>,
+<@dnl
                             <child>
                               <object class="GtkCheckButton" id="check_animated_pulldown">
                                 <property name="label" translatable="yes">Animated Pulldown</property>
@@ -2804,7 +2817,9 @@
                             <property name="width">1</property>
                             <property name="height">1</property>
                           </packing>
-                        </child>
+                        </child> @>)dnl
+define(<@m4_check_scroll_background@>, 
+<@dnl
                         <child>
                           <object class="GtkCheckButton" id="check_scroll_background">
                             <property name="label" translatable="yes">Scroll Background</property>
@@ -2820,7 +2835,9 @@
                             <property name="width">1</property>
                             <property name="height">1</property>
                           </packing>
-                        </child>
+                        </child> @>)dnl
+define(<@m4_section_4@>, 
+<@dnl
                         <child>
                           <object class="GtkGrid" id="grid5">
                             <property name="visible">True</property>
@@ -3931,4 +3948,6 @@
       <action-widget response="0">button_wizard_close</action-widget>
     </action-widgets>
   </object>
-</interface>
+</interface> @>)dnl
+
+ifelse(VTE_VERSION,<@vte-2.90@>, m4_section_1 m4_frame_word_chars m4_section_2 m4_button_background_image m4_check_use_image_for_background m4_section_3 m4_check_scroll_background m4_section_4, m4_section_1 m4_section_2 m4_section_3 m4_section_4)dnl
