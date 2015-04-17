@@ -854,7 +854,9 @@ static void check_terminal_bell_toggled_cb (GtkWidget *w)
     for (i=0; i<g_list_length (tw->terms); i++) {
         tt = g_list_nth_data (tw->terms, i);
         vte_terminal_set_audible_bell (VTE_TERMINAL(tt->vte_term), status);
+#ifdef VTE_290
         vte_terminal_set_visible_bell (VTE_TERMINAL(tt->vte_term), !status);
+#endif
     }
 }
 
@@ -1154,6 +1156,7 @@ static void entry_web_browser_changed (GtkWidget *w) {
     config_setstr ("web_browser", web_browser);
 }
 
+#ifdef VTE_290
 static void entry_word_chars_changed (GtkWidget *w)
 {
     guint i;
@@ -1171,6 +1174,7 @@ static void entry_word_chars_changed (GtkWidget *w)
         vte_terminal_set_word_chars (VTE_TERMINAL(tt->vte_term), word_chars);
     }
 }
+#endif
 
 /*
  * Finds the coordinate that will center the tilda window in the screen.
@@ -1408,15 +1412,18 @@ static void spin_level_of_transparency_value_changed_cb (GtkWidget *w)
     const gdouble transparency_level = (status / 100.0);
     guint i;
     tilda_term *tt;
-
-    config_setint ("transparency", status);
-
+    GdkRGBA bg; 
+    
+    bg.red   =    GUINT16_TO_FLOAT(config_getint ("back_red"));
+    bg.green =    GUINT16_TO_FLOAT(config_getint ("back_green"));
+    bg.blue  =    GUINT16_TO_FLOAT(config_getint ("back_blue"));
+    bg.alpha =    1.0 - (status / 100.0);
+    
+    config_setint ("back_alpha", (100 - status) * 0x290 - 65);
     for (i=0; i<g_list_length (tw->terms); i++) {
-        tt = g_list_nth_data (tw->terms, i);
-        vte_terminal_set_background_saturation (VTE_TERMINAL(tt->vte_term), transparency_level);
-        vte_terminal_set_opacity (VTE_TERMINAL(tt->vte_term), (1.0 - transparency_level) * 0xffff);
-        vte_terminal_set_background_transparent(VTE_TERMINAL(tt->vte_term), !tw->have_argb_visual);
-    }
+            tt = g_list_nth_data (tw->terms, i);
+            vte_terminal_set_color_background(VTE_TERMINAL(tt->vte_term), &bg);
+        }    
 }
 
 static void spin_animation_delay_value_changed_cb (GtkWidget *w)
@@ -1473,6 +1480,7 @@ static void check_animated_pulldown_toggled_cb (GtkWidget *w)
     }
 }
 
+#ifdef VTE_290
 static void check_use_image_for_background_toggled_cb (GtkWidget *w)
 {
     const gboolean status = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(w));
@@ -1514,6 +1522,7 @@ static void button_background_image_selection_changed_cb (GtkWidget *w)
         }
     }
 }
+#endif
 
 static void combo_colorschemes_changed_cb (GtkWidget *w)
 {
@@ -1622,7 +1631,6 @@ static void colorbutton_cursor_color_set_cb (GtkWidget *w)
     for (i=0; i<g_list_length (tw->terms); i++) {
         tt = g_list_nth_data (tw->terms, i);
         vte_terminal_set_color_cursor_rgba (VTE_TERMINAL(tt->vte_term), &gdk_cursor_color);
-    }
 }
 
 static void colorbutton_text_color_set_cb (GtkWidget *w)
@@ -1706,7 +1714,7 @@ static void combo_palette_scheme_changed_cb (GtkWidget *w) {
                                           current_palette,
                                           TERMINAL_PALETTE_SIZE);
         }
-
+        
         for (j=0; j<TERMINAL_PALETTE_SIZE; j++) {
             update_palette_color_button(j);
 
@@ -1869,7 +1877,7 @@ static void check_scroll_on_keystroke_toggled_cb (GtkWidget *w)
         vte_terminal_set_scroll_on_keystroke (VTE_TERMINAL(tt->vte_term), status);
     }
 }
-
+#ifdef VTE_290
 static void check_scroll_background_toggled_cb (GtkWidget *w)
 {
     const gboolean status = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(w));
@@ -1883,7 +1891,7 @@ static void check_scroll_background_toggled_cb (GtkWidget *w)
         vte_terminal_set_scroll_background (VTE_TERMINAL(tt->vte_term), status);
     }
 }
-
+#endif
 static void combo_backspace_binding_changed_cb (GtkWidget *w)
 {
     const gint status = gtk_combo_box_get_active (GTK_COMBO_BOX(w));
@@ -2104,7 +2112,7 @@ static void initialize_geometry_spinners() {
 
 	CHECK_BUTTON("check_centered_horizontally", "centered_horizontally");
 	CHECK_BUTTON("check_centered_vertically", "centered_vertically");
-        CHECK_BUTTON("check_start_fullscreen", "start_fullscreen");
+    CHECK_BUTTON("check_start_fullscreen", "start_fullscreen");
 
     gint xpos = config_getint("x_pos");
     if(xpos < rectangle.x) {
@@ -2186,25 +2194,17 @@ static void set_wizard_state_from_config () {
 
 
 	initialize_geometry_spinners();
-
     CHECK_BUTTON ("check_enable_transparency", "enable_transparency");
-    SPIN_BUTTON ("spin_level_of_transparency", "transparency");
     CHECK_BUTTON ("check_animated_pulldown", "animation");
     SPIN_BUTTON ("spin_animation_delay", "slide_sleep_usec");
     COMBO_BOX ("combo_animation_orientation", "animation_orientation");
-    CHECK_BUTTON ("check_use_image_for_background", "use_image");
 
-    char* filename = config_getstr ("image");
-    if(filename != NULL) {
-        FILE_BUTTON ("button_background_image", filename);
-    }
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_level_of_transparency","enable_transparency");
     SET_SENSITIVE_BY_CONFIG_BOOL ("spin_level_of_transparency","enable_transparency");
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_animation_delay","animation");
     SET_SENSITIVE_BY_CONFIG_BOOL ("spin_animation_delay","animation");
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_animation_orientation","animation");
     SET_SENSITIVE_BY_CONFIG_BOOL ("combo_animation_orientation","animation");
-    SET_SENSITIVE_BY_CONFIG_BOOL ("button_background_image","use_image");
 
     /* Colors Tab */
     COMBO_BOX ("combo_colorschemes", "scheme");
@@ -2243,11 +2243,25 @@ static void set_wizard_state_from_config () {
     SET_SENSITIVE_BY_CONFIG_BOOL ("label_scrollback_lines", "scroll_history_infinite");
     CHECK_BUTTON ("check_scroll_on_output", "scroll_on_output");
     CHECK_BUTTON ("check_scroll_on_keystroke", "scroll_on_key");
-    CHECK_BUTTON ("check_scroll_background", "scroll_background");
 
     /* Compatibility Tab */
     COMBO_BOX ("combo_backspace_binding", "backspace_key");
     COMBO_BOX ("combo_delete_binding", "delete_key");
+    
+    /* VTE-2.90 Compatibility */
+#ifdef VTE_290
+    SPIN_BUTTON ("spin_level_of_transparency", "transparency");
+    CHECK_BUTTON ("check_scroll_background", "scroll_background");
+    CHECK_BUTTON ("check_use_image_for_background", "use_image");
+    SET_SENSITIVE_BY_CONFIG_BOOL ("button_background_image","use_image");
+        
+    char* filename = config_getstr ("image");
+    if(filename != NULL) {
+        FILE_BUTTON ("button_background_image", filename);
+    }
+#else
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(gtk_builder_get_object(xml, ("spin_level_of_transparency"))), (100 - 100*GUINT16_TO_FLOAT(config_getint("back_alpha"))));
+#endif
 
     /* Keybinding Tab */
     BUTTON_LABEL_FROM_CFG ("button_keybinding_pulldown", "key");
@@ -2322,7 +2336,6 @@ static void connect_wizard_signals ()
 
     CONNECT_SIGNAL ("entry_web_browser","changed",entry_web_browser_changed);
     CONNECT_SIGNAL ("entry_web_browser","focus-out-event", validate_executable_command_cb);
-    CONNECT_SIGNAL ("entry_word_chars","changed",entry_word_chars_changed);
 
     /* Appearance Tab */
     CONNECT_SIGNAL ("combo_choose_monitor", "changed", combo_monitor_selection_changed_cb);
@@ -2338,11 +2351,9 @@ static void connect_wizard_signals ()
 
     CONNECT_SIGNAL ("check_enable_transparency","toggled",check_enable_transparency_toggled_cb);
     CONNECT_SIGNAL ("check_animated_pulldown","toggled",check_animated_pulldown_toggled_cb);
-    CONNECT_SIGNAL ("check_use_image_for_background","toggled",check_use_image_for_background_toggled_cb);
     CONNECT_SIGNAL ("spin_level_of_transparency","value-changed",spin_level_of_transparency_value_changed_cb);
     CONNECT_SIGNAL ("spin_animation_delay","value-changed",spin_animation_delay_value_changed_cb);
     CONNECT_SIGNAL ("combo_animation_orientation","changed",combo_animation_orientation_changed_cb);
-    CONNECT_SIGNAL ("button_background_image","selection-changed",button_background_image_selection_changed_cb);
 
     /* Colors Tab */
     CONNECT_SIGNAL ("combo_colorschemes","changed",combo_colorschemes_changed_cb);
@@ -2363,7 +2374,6 @@ static void connect_wizard_signals ()
     CONNECT_SIGNAL ("check_infinite_scrollback", "toggled", check_infinite_scrollback_toggled_cb);
     CONNECT_SIGNAL ("check_scroll_on_output","toggled",check_scroll_on_output_toggled_cb);
     CONNECT_SIGNAL ("check_scroll_on_keystroke","toggled",check_scroll_on_keystroke_toggled_cb);
-    CONNECT_SIGNAL ("check_scroll_background","toggled",check_scroll_background_toggled_cb);
 
     /* Compatibility Tab */
     CONNECT_SIGNAL ("combo_backspace_binding","changed",combo_backspace_binding_changed_cb);
@@ -2397,6 +2407,14 @@ static void connect_wizard_signals ()
     /* Close Button */
     CONNECT_SIGNAL ("button_wizard_close","clicked",button_wizard_close_clicked_cb);
     CONNECT_SIGNAL ("wizard_window","delete_event",button_wizard_close_clicked_cb);
+
+    /* VTE-2.90 SIGNALS */
+#ifdef VTE_290
+    CONNECT_SIGNAL ("entry_word_chars","changed",entry_word_chars_changed);
+    CONNECT_SIGNAL ("check_use_image_for_background","toggled",check_use_image_for_background_toggled_cb);
+    CONNECT_SIGNAL ("button_background_image","selection-changed",button_background_image_selection_changed_cb);
+    CONNECT_SIGNAL ("check_scroll_background","toggled",check_scroll_background_toggled_cb);
+#endif
 }
 
 /* Initialize the palette scheme menu.

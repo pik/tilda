@@ -112,18 +112,20 @@ if test "x$enable_lto" = "xyes"; then
     LDFLAGS="$LDFLAGS $CFLAGS -fuse-linker-plugin"
 fi
 
-AC_ARG_ENABLE([vte_291],
+AC_ARG_ENABLE([vte2.91],
 		[AS_HELP_STRING([--enable-vte2.91],
 						[compile with libvte2.91 [default=no]])],
 		[enable_vte_291=$enableval],
 		[enable_vte_291=no])
         
-#
-#AS_IF([test "x$enable_vte_291" = xyes],
-#	  [vte_version="2.90"],
-#	  [vte_version="2.91"])
-#AM_CONDITIONAL([VTE_291], [test "x$vte_version" = "x2.91"])
-AM_CONDITIONAL([VTE_291], [test "x$enable_vte_291" = xyes])
+if test "x$enable_vte_291" = "xyes"; then
+    vte_package="vte-2.91"
+else
+    vte_package="vte-2.90"
+fi
+
+AC_DEFINE_UNQUOTED([VTE_VERSION], ["$vte_package"], [The version of VTE to compile with])
+AM_CONDITIONAL([VTE_290], [test "x$enable_vte_291" = "xno"])
 
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources, no)
 if test x$GLIB_COMPILE_RESOURCES = xno; then
@@ -144,7 +146,7 @@ AM_GNU_GETTEXT([external])
 # Checks for libraries.
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GTK], [gtk+-3.0 >= 3.0.0])
-PKG_CHECK_MODULES([VTE], [vte-2.90])
+PKG_CHECK_MODULES([VTE], [$vte_package]) #VTE_VERSION
 PKG_CHECK_MODULES([LIBCONFUSE], [libconfuse])
 PKG_CHECK_MODULES([X11], [x11])
 
@@ -197,5 +199,6 @@ echo "
         compiler:                      ${CC}
         cflags:                        ${cflaglines}
         Maintainer mode:               ${USE_MAINTAINER_MODE}
+        VTE:                           ${vte_package}
         Use *_DISABLE_DEPRECATED:      ${enable_deprecation_flags}
 "
