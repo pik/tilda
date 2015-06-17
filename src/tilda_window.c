@@ -35,6 +35,13 @@
 #include <X11/Xlib.h>
 #include <gdk/gdkx.h>
 
+//TEMP add debuging macros
+#if DEBUG
+#define debug_printf(args...) do { g_print ("debug: " args); } while (0)
+#else
+#define debug_printf(args...) do { /* nothing */ } while (0)
+#endif
+
 static void
 tilda_window_setup_alpha_mode (tilda_window *tw)
 {
@@ -672,6 +679,21 @@ static gint tilda_window_set_icon (tilda_window *tw, gchar *filename)
     return 0;
 }
 
+static int state_event_counter = 0;
+
+static void tilda_window_state_event_cb(GtkWidget *widget, GdkEvent  *event, gpointer user_data) 
+{
+    GdkEventWindowState *ev = (GdkEventWindowState*)event;
+    //ev = event;
+    /* Event_type 32 == GDK_WINDOW_STATE
+     * 
+     * 
+     * 
+     */ 
+    debug_printf("tilda_window_state_event triggered: %i \n", state_event_counter++);
+    debug_printf("event_type: %i, send_event: %i, changed_mask: %i, new_window_state: %i \n", ev->type, ev->send_event, ev->changed_mask, ev->new_window_state);
+}
+
 static gboolean delete_event_callback (G_GNUC_UNUSED GtkWidget *widget,
                                 G_GNUC_UNUSED GdkEvent  *event,
                                 G_GNUC_UNUSED gpointer   user_data)
@@ -819,6 +841,10 @@ gboolean tilda_window_init (const gchar *config_file, const gint instance, tilda
     gtk_widget_realize (tw->window);
     generate_animation_positions (tw);
 
+
+    /* Debug Fullscreen problem */
+    g_signal_connect(G_OBJECT(tw->window), "window-state-event", G_CALLBACK(tilda_window_state_event_cb), NULL);
+    
     return TRUE;
 }
 
