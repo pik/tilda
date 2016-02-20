@@ -58,6 +58,7 @@ enum delete_keys { ASCII_DELETE, DELETE_SEQUENCE, ASCII_BACKSPACE, AUTO };
  *        structures, such as the notebook.
  */
 struct tilda_term_ *tilda_term_init (struct tilda_window_ *tw);
+struct tilda_term_ *_tilda_term_init (struct tilda_window_ *tw, gchar *command);
 
 /**
  * tilda_term_free ()

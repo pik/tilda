@@ -97,6 +97,8 @@ static cfg_opt_t config_opts[] = {
     CFG_INT("palette_scheme", 0, CFGF_NONE),
     CFG_INT("non_focus_pull_up_behaviour", 0, CFGF_NONE),
     CFG_INT("cursor_shape", 0, CFGF_NONE),
+    /* DBUS */
+    CFG_INT("target_instance", -1, CFGF_NONE),
 
     /* Deprecated tilda options */
     CFG_INT("show_on_monitor_number", 0, CFGF_NODEFAULT),

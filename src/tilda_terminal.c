@@ -37,6 +37,7 @@
 GdkRGBA current_palette[TERMINAL_PALETTE_SIZE];
 
 static gint start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command, const char* working_dir);
+static gint _start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command, const char* working_dir, gchar *command);
 static gint tilda_term_config_defaults (tilda_term *tt);
 
 #ifdef VTE_290
@@ -90,6 +91,11 @@ static void tilda_terminal_switch_page_cb (GtkNotebook *notebook,
 }
 
 struct tilda_term_ *tilda_term_init (struct tilda_window_ *tw)
+{
+    return _tilda_term_init (tw, NULL);
+}
+
+struct tilda_term_ *_tilda_term_init (struct tilda_window_ *tw, gchar *command)
 {
     DEBUG_FUNCTION ("tilda_term_init");
     DEBUG_ASSERT (tw != NULL);
@@ -202,7 +208,7 @@ struct tilda_term_ *tilda_term_init (struct tilda_window_ *tw)
     }
 
     /* Fork the appropriate command into the terminal */
-    ret = start_shell (term, FALSE, current_tt_dir);
+    ret = _start_shell (term, FALSE, current_tt_dir, command);
 
     g_free(current_tt_dir);
 
@@ -418,6 +424,11 @@ char* tilda_term_get_cwd(struct tilda_term_* tt)
     return cwd;
 }
 
+static gint start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command, const char* working_dir)
+{
+    _start_shell(tt, ignore_custom_command, working_dir, NULL);
+}
+
 /* Fork a shell into the VTE Terminal
  *
  * @param tt the tilda_term to fork into
@@ -425,7 +436,7 @@ char* tilda_term_get_cwd(struct tilda_term_* tt)
  * SUCCESS: return 0
  * FAILURE: return non-zero
  */
-static gint start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command, const char* working_dir)
+static gint _start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command, const char* working_dir, gchar* command)
 {
     DEBUG_FUNCTION ("start_shell");
     DEBUG_ASSERT (tt != NULL);
@@ -442,9 +453,13 @@ static gint start_shell (struct tilda_term_ *tt, gboolean ignore_custom_command,
         working_dir = config_getstr ("working_dir");
     }
 
-    if (config_getbool ("run_command") && !ignore_custom_command)
+    if ((command != NULL || config_getbool ("run_command")) && !ignore_custom_command)
     {
-        ret = g_shell_parse_argv (config_getstr ("command"), &argc, &argv, &error);
+        if (command != NULL) {
+            ret = g_shell_parse_argv(command, &argc, &argv, &error);
+        } else {
+            ret = g_shell_parse_argv (config_getstr ("command"), &argc, &argv, &error);
+        }
 
         /* Check for error */
         if (ret == FALSE)

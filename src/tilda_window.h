@@ -116,6 +116,8 @@ enum notebook_tab_positions { NB_TOP, NB_BOTTOM, NB_LEFT, NB_RIGHT, NB_HIDDEN };
  */
 gint tilda_window_add_tab (tilda_window *tw);
 
+gint _tilda_window_add_tab (tilda_window *tw, gchar *command);
+
 /**
  * tilda_window_close_tab ()
  *

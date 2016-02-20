@@ -47,6 +47,7 @@
 #include "wizard.h"
 #include "xerror.h"
 #include "tomboykeybinder.h"
+#include "tilda_dbus.h"
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -303,6 +304,27 @@ static gint remove_stale_lock_files ()
     return 0;
 }
 
+struct tilda_cli_opts {
+    gchar *background_color;
+    gchar *command;
+    gchar *font;
+    gchar *working_dir;
+#ifdef VTE_290
+    gchar *image;
+    gint transparency;
+#else
+    gint back_alpha;
+#endif
+    gint lines;
+    gint x_pos;
+    gint y_pos;
+    gboolean antialias;
+    gboolean scrollbar;
+    gboolean show_config;
+    gboolean version;
+    gboolean hidden;
+    gint target_instance;
+};
 /**
  * Parse all of the Command-Line Options given to tilda.
  * This can modify argv and argc, and will set values in the config.
@@ -311,55 +333,58 @@ static gint remove_stale_lock_files ()
  * @param argv argv from main
  * @return TRUE if we should show the configuration wizard, FALSE otherwise
  */
-static gboolean parse_cli (int argc, char *argv[])
+void parse_cli (struct tilda_cli_opts *cli_opts, int argc, char *argv[])
 {
     DEBUG_FUNCTION ("parse_cli");
     DEBUG_ASSERT (argc != 0);
     DEBUG_ASSERT (argv != NULL);
-
     /* Set default values */
-    gchar *background_color = config_getstr ("background_color");
-    gchar *command = config_getstr ("command");
-    gchar *font = config_getstr ("font");
-    gchar *working_dir = config_getstr ("working_dir");
+    cli_opts->background_color = config_getstr ("background_color");
+    cli_opts->command = config_getstr ("command");
+    cli_opts->font = config_getstr ("font");
+    cli_opts->working_dir = config_getstr ("working_dir");
 
 #ifdef VTE_290
-    gchar *image = config_getstr ("image");
-    gint transparency = config_getint ("transparency");
+    cli_opts->image = config_getstr ("image");
+    cli_opts->transparency = config_getint ("transparency");
 #else
-    gint back_alpha = config_getint ("back_alpha");
+    cli_opts->back_alpha = config_getint ("back_alpha");
 #endif
 
-    gint lines = config_getint ("lines");
-    gint x_pos = config_getint ("x_pos");
-    gint y_pos = config_getint ("y_pos");
+    cli_opts->lines = config_getint ("lines");
+    cli_opts->x_pos = config_getint ("x_pos");
+    cli_opts->y_pos = config_getint ("y_pos");
 
-    gboolean antialias = config_getbool ("antialias");
-    gboolean scrollbar = config_getbool ("scrollbar");
-    gboolean show_config = FALSE;
-    gboolean version = FALSE;
-    gboolean hidden = config_getbool ("hidden");
+    cli_opts->antialias = config_getbool ("antialias");
+    cli_opts->scrollbar = config_getbool ("scrollbar");
+    cli_opts->show_config = FALSE;
+    cli_opts->version = FALSE;
+    cli_opts->hidden = config_getbool ("hidden");
+
+    /* Window to execute a command in with DBus call */
+    cli_opts->target_instance = -1;
 
     /* All of the various command-line options */
     GOptionEntry cl_opts[] = {
-        { "antialias",          'a', 0, G_OPTION_ARG_NONE,      &antialias,         N_("Use Antialiased Fonts"), NULL },
-        { "background-color",   'b', 0, G_OPTION_ARG_STRING,    &background_color,  N_("Set the background color"), NULL },
-        { "command",            'c', 0, G_OPTION_ARG_STRING,    &command,           N_("Run a command at startup"), NULL },
-        { "hidden",             'h', 0, G_OPTION_ARG_NONE,      &hidden,            N_("Start Tilda hidden"), NULL },
-        { "font",               'f', 0, G_OPTION_ARG_STRING,    &font,              N_("Set the font to the following string"), NULL },
-        { "lines",              'l', 0, G_OPTION_ARG_INT,       &lines,             N_("Scrollback Lines"), NULL },
-        { "scrollbar",          's', 0, G_OPTION_ARG_NONE,      &scrollbar,         N_("Use Scrollbar"), NULL },
-        { "version",            'v', 0, G_OPTION_ARG_NONE,      &version,           N_("Print the version, then exit"), NULL },
-        { "working-dir",        'w', 0, G_OPTION_ARG_STRING,    &working_dir,       N_("Set Initial Working Directory"), NULL },
-        { "x-pos",              'x', 0, G_OPTION_ARG_INT,       &x_pos,             N_("X Position"), NULL },
-        { "y-pos",              'y', 0, G_OPTION_ARG_INT,       &y_pos,             N_("Y Position"), NULL },
+        { "antialias",          'a', 0, G_OPTION_ARG_NONE,       &(cli_opts->antialias),         N_("Use Antialiased Fonts"), NULL },
+        { "background-color",   'b', 0, G_OPTION_ARG_STRING,     &*(cli_opts->background_color),  N_("Set the background color"), NULL },
+        { "command",            'c', 0, G_OPTION_ARG_STRING,     &(cli_opts->command),           N_("Run a command at startup"), NULL },
+        { "hidden",             'h', 0, G_OPTION_ARG_NONE,       &(cli_opts->hidden),            N_("Start Tilda hidden"), NULL },
+        { "font",               'f', 0, G_OPTION_ARG_STRING,     &(cli_opts->font),              N_("Set the font to the following string"), NULL },
+        { "lines",              'l', 0, G_OPTION_ARG_INT,        &(cli_opts->lines),             N_("Scrollback Lines"), NULL },
+        { "scrollbar",          's', 0, G_OPTION_ARG_NONE,       &(cli_opts->scrollbar),         N_("Use Scrollbar"), NULL },
+        { "version",            'v', 0, G_OPTION_ARG_NONE,       &(cli_opts->version),           N_("Print the version, then exit"), NULL },
+        { "working-dir",        'w', 0, G_OPTION_ARG_STRING,     &(cli_opts->working_dir),       N_("Set Initial Working Directory"), NULL },
+        { "x-pos",              'x', 0, G_OPTION_ARG_INT,        &(cli_opts->x_pos),             N_("X Position"), NULL },
+        { "y-pos",              'y', 0, G_OPTION_ARG_INT,        &(cli_opts->y_pos),             N_("Y Position"), NULL },
 #ifdef VTE_290
-        { "image",              'B', 0, G_OPTION_ARG_STRING,    &image,             N_("Set Background Image"), NULL },
-        { "transparency",       't', 0, G_OPTION_ARG_INT,       &transparency,      N_("Opaqueness: 0-100%"), NULL },
+        { "image",              'B', 0, G_OPTION_ARG_STRING,     &(cli_opts->image),             N_("Set Background Image"), NULL },
+        { "transparency",       't', 0, G_OPTION_ARG_INT,        &(cli_opts->transparency),      N_("Opaqueness: 0-100%"), NULL },
 #else
-        { "background-alpha",   't', 0, G_OPTION_ARG_INT,       &back_alpha,        N_("Opaqueness: 0-100%"), NULL },
+        { "background-alpha",   't', 0, G_OPTION_ARG_INT,        &(cli_opts->back_alpha),        N_("Opaqueness: 0-100%"), NULL },
 #endif
-        { "config",             'C', 0, G_OPTION_ARG_NONE,      &show_config,       N_("Show Configuration Wizard"), NULL },
+        { "target-instance",    'T', 0, G_OPTION_ARG_INT,  &(cli_opts->target_instance),     N_("Execute command in target window"), NULL },
+        { "config",             'C', 0, G_OPTION_ARG_NONE,       &(cli_opts->show_config),       N_("Show Configuration Wizard"), NULL },
         { NULL }
     };
 
@@ -381,7 +406,7 @@ static gboolean parse_cli (int argc, char *argv[])
     }
 
     /* If we need to show the version, show it then exit normally */
-    if (version)
+    if (cli_opts->version)
     {
         g_print ("%s\n\n", TILDA_VERSION);
 
@@ -417,69 +442,69 @@ static gboolean parse_cli (int argc, char *argv[])
 
         exit (EXIT_FAILURE);
     }
+}
 
+static void setup_config_from_cli_opts(struct tilda_cli_opts *cli_opts)
+{
     /* Now set the options in the config, if they changed */
-    if (background_color != config_getstr ("background_color")) {
-        config_setstr ("background_color", background_color);
+    if (cli_opts->background_color != config_getstr ("background_color")) {
+        config_setstr ("background_color", cli_opts->background_color);
 
         GdkColor col;
-        if (gdk_color_parse(background_color, &col)) {
+        if (gdk_color_parse(cli_opts->background_color, &col)) {
             config_setint("back_red", col.red);
             config_setint("back_green", col.green);
             config_setint("back_blue", col.blue);
         }
 
-        g_free(background_color);
+        g_free(cli_opts->background_color);
     }
-    if (command != config_getstr ("command"))
+    if ((cli_opts->command != config_getstr ("command")) && (cli_opts->target_instance != -1))
     {
         config_setbool ("run_command", TRUE);
-        config_setstr ("command", command);
-        g_free(command);
+        config_setstr ("command", cli_opts->command);
+        g_free(cli_opts->command);
     }
-    if (font != config_getstr ("font")) {
-        config_setstr ("font", font);
-        g_free(font);
+    if (cli_opts->font != config_getstr ("font")) {
+        config_setstr ("font", cli_opts->font);
+        g_free(cli_opts->font);
     }
 #ifdef VTE_290
-    if (image != config_getstr ("image")) {
-        config_setstr ("image", image);
-        g_free(image);
+    if (cli_opts->image != config_getstr ("image")) {
+        config_setstr ("image", cli_opts->image);
+        g_free(cli_opts->image);
     }
-    if (transparency != config_getint ("transparency"))
+    if (cli_opts->transparency != config_getint ("transparency"))
     {
-        config_setbool ("enable_transparency", transparency);
-        config_setint ("transparency", transparency);
+        config_setbool ("enable_transparency", cli_opts->transparency);
+        config_setint ("transparency", cli_opts->transparency);
     }
 #else
-    if (back_alpha != config_getint ("back_alpha"))
+    if (cli_opts->back_alpha != config_getint ("back_alpha"))
     {
-        config_setbool ("enable_transparency", ~back_alpha & 0xffff);
-        config_setint ("back_alpha", back_alpha);
+        config_setbool ("enable_transparency", ~cli_opts->back_alpha & 0xffff);
+        config_setint ("back_alpha", cli_opts->back_alpha);
     }
 #endif
-    if (working_dir != config_getstr ("working_dir")) {
-        config_setstr ("working_dir", working_dir);
-        g_free(working_dir);
+    if (cli_opts->working_dir != config_getstr ("working_dir")) {
+        config_setstr ("working_dir", cli_opts->working_dir);
+        g_free(cli_opts->working_dir);
     }
 
-    if (lines != config_getint ("lines"))
-        config_setint ("lines", lines);
+    if (cli_opts->lines != config_getint ("lines"))
+        config_setint ("lines", cli_opts->lines);
 
-    if (x_pos != config_getint ("x_pos"))
-        config_setint ("x_pos", x_pos);
-    if (y_pos != config_getint ("y_pos"))
-        config_setint ("y_pos", y_pos);
+    if (cli_opts->x_pos != config_getint ("x_pos"))
+        config_setint ("x_pos", cli_opts->x_pos);
+    if (cli_opts->y_pos != config_getint ("y_pos"))
+        config_setint ("y_pos", cli_opts->y_pos);
 
-    if (antialias != config_getbool ("antialias"))
-        config_setbool ("antialias", antialias);
-    if (hidden != config_getbool ("hidden"))
-        config_setbool ("hidden", hidden);
-    if (scrollbar != config_getbool ("scrollbar"))
-        config_setbool ("scrollbar", scrollbar);
-
-    /* TRUE if we should show the config wizard, FALSE otherwize */
-    return show_config;
+    if (cli_opts->antialias != config_getbool ("antialias"))
+        config_setbool ("antialias", cli_opts->antialias);
+    if (cli_opts->hidden != config_getbool ("hidden"))
+        config_setbool ("hidden", cli_opts->hidden);
+    if (cli_opts->scrollbar != config_getbool ("scrollbar"))
+        config_setbool ("scrollbar", cli_opts->scrollbar);
 }
 
 /**
@@ -671,6 +696,7 @@ int main (int argc, char *argv[])
                             VTE_MAJOR_VERSION, VTE_MINOR_VERSION, VTE_MICRO_VERSION);
 
     tilda_window tw;
+    GDBusConnection *connection;
     /* NULL set the tw pointers so we can get a clean exit on initialization failure */
     memset(&tw, 0, sizeof(tilda_window));
 
@@ -727,7 +753,6 @@ int main (int argc, char *argv[])
     close(lock.file_descriptor);
     g_free(global_lock_file);
 
-
 #if ENABLE_NLS
     /* Gettext Initialization */
     char* locale = setlocale (LC_ALL, "");
@@ -750,7 +775,28 @@ int main (int argc, char *argv[])
     gint config_init_result = config_init (config_file);
 
     /* Parse the command line */
-    need_wizard = parse_cli (argc, argv);
+    struct tilda_cli_opts cli_opts = {};
+    parse_cli (&cli_opts, argc, argv);
+    need_wizard = cli_opts.show_config;
+
+    GVariant *ret;
+    GError *error = NULL;
+    if (cli_opts.target_instance != -1) {
+        connection = tilda_dbus_peer_connect(config_getint("target_instance"));
+
+        if (connection == NULL)
+            goto initialization_failed;
+
+        tilda_dbus_peer_send_command(connection, cli_opts.command);
+        g_free(cli_opts.command);
+        g_object_unref (connection);
+        goto initialization_failed;
+    } else {
+        tilda_dbus_server_start(&tw, lock.instance);
+    }
+
+    /* Setup config after GDBus */
+    setup_config_from_cli_opts(&cli_opts);
 
     /* We're about to startup X, so set the error handler. */
     XSetErrorHandler (xerror_handler);

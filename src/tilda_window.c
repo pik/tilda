@@ -1080,7 +1080,12 @@ gint tilda_window_free (tilda_window *tw)
     return 0;
 }
 
-gint tilda_window_add_tab (tilda_window *tw)
+gint tilda_window_add_tab(tilda_window *tw)
+{
+    return _tilda_window_add_tab(tw, NULL);
+}
+
+gint _tilda_window_add_tab (tilda_window *tw, gchar *command)
 {
     DEBUG_FUNCTION ("tilda_window_add_tab");
     DEBUG_ASSERT (tw != NULL);
@@ -1089,7 +1094,7 @@ gint tilda_window_add_tab (tilda_window *tw)
     GtkWidget *label;
     gint index;
 
-    tt = tilda_term_init (tw);
+    tt = _tilda_term_init (tw, command);
 
     if (tt == NULL)
     {
