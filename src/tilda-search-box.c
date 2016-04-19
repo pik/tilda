@@ -74,7 +74,11 @@ search (TildaSearchBox       *search,
   text = gtk_entry_buffer_get_text (buffer);
 
   if (!search->last_search_successful)
+  {
     wrap_on_search = TRUE;
+    /* Hide the error label on search rewrapping to start */
+    gtk_widget_set_visible (search->label, FALSE);
+  }
 
   if (is_regex)
     {
