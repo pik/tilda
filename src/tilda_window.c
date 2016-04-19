@@ -206,6 +206,7 @@ search_cb (TildaSearchBox       *search,
            gboolean              wrap_on_search,
            tilda_window         *tw)
 {
+  DEBUG_PRINTF("in search_cb\n");
   VteTerminal *vte_terminal;
   tilda_term *term;
 
@@ -221,10 +222,15 @@ search_cb (TildaSearchBox       *search,
 
   vte_terminal_search_set_wrap_around (vte_terminal, wrap_on_search);
 
+  gboolean ret;
+
   if (direction == SEARCH_BACKWARD)
-    return vte_terminal_search_find_previous (vte_terminal);
+    ret = vte_terminal_search_find_previous (vte_terminal);
   else
-    return vte_terminal_search_find_next (vte_terminal);
+    ret = vte_terminal_search_find_next (vte_terminal);
+
+  DEBUG_PRINTF("search_cb return value: %i\n", ret);
+  return ret;
 }
 
 static void

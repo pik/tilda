@@ -17,6 +17,7 @@
 
 #include "tilda-search-box.h"
 #include "tilda-enum-types.h"
+#include "debug.h"
 
 #define GRESOURCE "/org/tilda/"
 
@@ -108,13 +109,16 @@ search (TildaSearchBox       *search,
       g_error_free (error);
       return;
     }
-
+  DEBUG_PRINTF("emitting signal..\n");
   g_signal_emit (search, signals[SIGNAL_SEARCH], 0,
                  regex, direction, wrap_on_search, &search_result);
-
+  DEBUG_PRINTF("signal emitted..\n");
   search->last_direction = direction;
 
   gtk_widget_set_visible (search->label, !search_result);
+
+  DEBUG_PRINTF("search_result: %i\n", search_result);
+
   search->last_search_successful = search_result;
 
   g_regex_unref(regex);
