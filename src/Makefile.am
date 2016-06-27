@@ -34,6 +34,7 @@ src_tilda_SOURCES = src/callback_func.h src/callback_func.c \
 		src/tilda_terminal.h src/tilda_terminal.c \
 		src/tilda_window.h src/tilda_window.c \
 		src/tomboykeybinder.h src/tomboykeybinder.c \
+		src/keybindings.h src/keybindings.c \
 		src/wizard.h src/wizard.c \
 		src/xerror.h src/xerror.c \
 		src/glade-resources.h src/glade-resources.c \
