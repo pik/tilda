@@ -44,6 +44,7 @@ static gboolean validate_pulldown_keybinding(const gchar* accel, tilda_window* t
         /* Show the "invalid keybinding" dialog */
         gchar *message = g_strdup_printf(_("The keybinding you chose for \"%s\" is invalid. Please choose another."), action);
         show_invalid_keybinding_dialog (GTK_WINDOW(tw->wizard_window), action);
+        g_free(message);
         return FALSE;
     }
 }
@@ -60,6 +61,7 @@ static gboolean validate_keybinding(const gchar* accel, const tilda_window *tw, 
     } else {
         gchar *message = g_strdup_printf(_("The keybinding you chose for \"%s\" is invalid. Please choose another."), action);
         show_invalid_keybinding_dialog (GTK_WINDOW(tw->wizard_window), message);
+        g_free(message);
         return FALSE;
     }
 }
