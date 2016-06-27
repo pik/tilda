@@ -32,7 +32,7 @@ enum
 	KB_NUM_COLUMNS
 };
 
-static gboolean validate_pulldown_keybinding(const gchar* accel, tilda_window* tw, const gchar* message)
+static gboolean validate_pulldown_keybinding(const gchar* accel, tilda_window* tw, const gchar* action)
 {
     /* Try to grab the key. This is a good way to validate it :) */
     gboolean key_is_valid = tilda_keygrabber_bind (accel, tw);
@@ -42,12 +42,13 @@ static gboolean validate_pulldown_keybinding(const gchar* accel, tilda_window* t
     else
     {
         /* Show the "invalid keybinding" dialog */
-        show_invalid_keybinding_dialog (GTK_WINDOW(tw->wizard_window), message);
+        gchar *message = g_strdup_printf(_("The keybinding you chose for \"%s\" is invalid. Please choose another."), action);
+        show_invalid_keybinding_dialog (GTK_WINDOW(tw->wizard_window), action);
         return FALSE;
     }
 }
 
-static gboolean validate_keybinding(const gchar* accel, const tilda_window *tw, const gchar* message)
+static gboolean validate_keybinding(const gchar* accel, const tilda_window *tw, const gchar* action)
 {
     guint accel_key;
     GdkModifierType accel_mods;
@@ -57,6 +58,7 @@ static gboolean validate_keybinding(const gchar* accel, const tilda_window *tw, 
     if (! ((accel_key == 0) && (accel_mods == 0)) ) {
         return TRUE;
     } else {
+        gchar *message = g_strdup_printf(_("The keybinding you chose for \"%s\" is invalid. Please choose another."), action);
         show_invalid_keybinding_dialog (GTK_WINDOW(tw->wizard_window), message);
         return FALSE;
     }
@@ -219,16 +221,13 @@ static gboolean validate_keybindings(const tilda_window *tw)
 		if(0 == g_strcmp0("key", config_name))
 		{
 			if (!validate_pulldown_keybinding(shortcut, tw,
-											  _("The keybinding you chose for \"Pull Down Terminal\" is invalid. Please choose another.")))
+											  _("Pull Down Terminal")))
 				return FALSE;
 		}
 		else
 		{
-			gchar *message = g_strdup_printf(_("The keybinding you chose for \"%s\" is invalid. Please choose another."), action);
-
-			if (!validate_keybinding(shortcut, tw, message))
+			if (!validate_keybinding(shortcut, tw, action))
 			{
-				g_free(message);
 				return FALSE;
 			}
 

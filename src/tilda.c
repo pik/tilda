@@ -828,7 +828,7 @@ int main (int argc, char *argv[])
         if (!ret)
         {
             /* The key was unbindable, so we need to show the wizard */
-            show_invalid_keybinding_dialog (NULL, _("The keybinding you chose for \"Pull Down Terminal\" is invalid. Please choose another."));
+            show_invalid_keybinding_dialog (NULL, _("Pull Down Terminal"));
             wizard (&tw);
         }
     }
